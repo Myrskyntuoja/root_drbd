@@ -1,0 +1,35 @@
+#!/bin/sh
+
+PREREQ=""
+
+prereqs()
+{
+    echo "$PREREQ"
+}
+
+case $1 in
+# get pre-requisites
+prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+manual_add_modules drbd
+manual_add_modules dummy
+
+. /usr/share/initramfs-tools/hook-functions
+copy_exec /sbin/drbdadm /sbin/drbdadm
+copy_exec /sbin/drbdmeta /sbin/drbdmeta
+copy_exec /sbin/drbdsetup /sbin/drbdsetup
+copy_exec /usr/sbin/kpartx
+if [ -x /usr/sbin/gdisk ]; then
+    copy_exec /usr/sbin/gdisk
+fi
+copy_exec /usr/lib/drbd/drbdadm-84 /usr/lib/drbd/drbdadm-84
+copy_exec /usr/lib/drbd/drbdsetup-84 /usr/lib/drbd/drbdsetup-84
+cp -rp /etc/drbd.conf $DESTDIR/etc/
+cp -rp /etc/drbd.d $DESTDIR/etc/
+mkdir -p $DESTDIR/var/lib/drbd
