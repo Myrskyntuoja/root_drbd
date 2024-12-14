@@ -206,10 +206,11 @@ vda3_crypt UUID=851792e9-b9d8-4555-a26d-038dd75fdfc0 none luks,discard
 ### Step 3: prepare initramfs hook script
 
  You need a hook script in order to place the required files into your initramfs. If you use Debian 12 or Mint 22,
-you can use [hooks/drbd](hooks/drbd) as is, granted you've installed `kpartx`; otherwise double-check the paths and
-file names. The `dummy` module is used to trick DRBD into believing that you have the IP address mentioned in your
-resource config. Place the hook file into `/usr/share/initramfs-tools/hooks` (might be different for your distro!),
-make it executable. If your distribution uses something radically different to build initramfs images, research it.
+you can use [hooks/drbd](hooks/drbd) as is, granted you've installed `kpartx` and, if your disk is GPT, `gdisk`;
+otherwise double-check the paths and file names. The `dummy` module is used to trick DRBD into believing that you
+have the IP address mentioned in your resource config. Place the hook file into `/usr/share/initramfs-tools/hooks`
+(might be different for your distro!), make it executable. If your distribution uses something radically different
+to build initramfs images, research it.
 
 ### Step 4: prepare initramfs local-top script
 
