@@ -1,0 +1,89 @@
+#!/bin/sh
+
+PREREQ=""
+
+# !! EDIT THOSE
+MY_IPADDR="192.168.5.4"
+MY_HOSTNAME="user-pc"
+MY_DRBD_RESOURCE="wholedisk"
+MY_DRBD_DEVICE="/dev/drbd0"
+# !! THE REST IS PROBABLY OK
+
+#
+# Standard initramfs preamble
+#
+prereqs()
+{
+    echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+
+. /scripts/functions
+
+do_init_drbd()
+{
+    modprobe drbd
+    modprobe dummy
+
+    wait_for_udev 10
+
+    ip link add dummy_drbd type dummy
+    ip addr add $MY_IPADDR/32 dev dummy_drbd
+    ip link set dev dummy_drbd up
+
+    hostname $MY_HOSTNAME
+
+    if [ "${quiet?}" != "y" ] ; then
+	/sbin/drbdadm up $MY_DRBD_RESOURCE
+	/sbin/drbdadm primary $MY_DRBD_RESOURCE
+    else
+	/sbin/drbdadm up $MY_DRBD_RESOURCE > /dev/null 2>&1
+	/sbin/drbdadm primary $MY_DRBD_RESOURCE > /dev/null 2>&1
+    fi
+
+    ip addr del $MY_IPADDR/32 dev dummy_drbd
+    ip link delete dev dummy_drbd
+
+    kpartx -a $MY_DRBD_DEVICE
+}
+
+
+do_init_resource()
+{
+    modprobe drbd
+    modprobe dummy
+
+    wait_for_udev 10
+
+    ip link add dummy_drbd type dummy
+    ip addr add $MY_IPADDR/32 dev dummy_drbd
+    ip link set dev dummy_drbd up
+
+    hostname $MY_HOSTNAME
+
+    /sbin/drbdadm --force create-md $MY_DRBD_RESOURCE
+    /sbin/drbdadm up $MY_DRBD_RESOURCE
+    /sbin/drbdadm -- --overwrite-data-of-peer primary $MY_DRBD_RESOURCE
+
+    ip addr del $MY_IPADDR/32 dev dummy_drbd
+    ip link delete dev dummy_drbd
+}
+
+
+#######################################################################
+# Begin real processing
+
+case $1 in
+init-resource)
+    do_init_resource
+    exit 0
+    ;;
+esac
+
+do_init_drbd
